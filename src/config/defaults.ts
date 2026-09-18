@@ -5,13 +5,20 @@ export const HERO_IMAGE = "/shine/03_Website_Visuals/super-shine-website-hero-ba
 export const SCENE_IMAGE = "/shine/03_Website_Visuals/super-shine-warm-product-scene.png";
 
 /**
- * The intro band reuses the banner photograph.
+ * The intro band shows the banner photograph, cropped.
  *
  * The hero composes its own scene from the cut-out bottle, so the banner is
  * otherwise never rendered anywhere. It also keeps the bottle from appearing
  * three times before the visitor reaches the product.
+ *
+ * The banner is framed for the hero, with wide empty wall on the left for the
+ * headline to sit over, and the bottle, slab and bowl pushed hard against the
+ * right edge. In the intro's half-width panel that crop left the group at 88%
+ * across with the bowl clipped off, so this is the same photograph cropped to
+ * x 690-1672, y 118-904 of the original: 982x786, near the panel's own ratio,
+ * with the bottle centred and the slab running the full width.
  */
-export const INTRO_IMAGE = HERO_IMAGE;
+export const INTRO_IMAGE = "/shine/03_Website_Visuals/super-shine-intro-scene.png";
 
 const resultImage = (name: string) => `/shine/02_Before_and_After/${name}.png`;
 

@@ -5,6 +5,7 @@ import { useState, useTransition } from "react";
 import { saveSettings } from "@/app/admin/actions";
 import { Button } from "@/components/ui/Button";
 import { Notice, Panel } from "./ui";
+import { INTRO_IMAGE } from "@/config/defaults";
 import type { SiteSettings } from "@/types";
 
 const INPUT =
@@ -15,7 +16,7 @@ const AREA =
 export function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [s, setS] = useState({
     heroImage: settings.hero.image || "",
-    introImage: settings.intro.image || "/shine/03_Website_Visuals/super-shine-warm-product-scene.png",
+    introImage: settings.intro.image || INTRO_IMAGE,
     heroPrimaryCta: settings.hero.primaryCta,
     heroSecondaryCta: settings.hero.secondaryCta,
     announcement: settings.announcement ?? "",
@@ -91,7 +92,7 @@ export function SettingsForm({ settings }: { settings: SiteSettings }) {
           <Field label="Hero image URL or uploaded path" className="lg:col-span-2"><input className={INPUT} value={s.heroImage} onChange={e => patch({ heroImage: e.target.value })} /><p className="mt-2 text-xs text-muted">Leave blank to use the Super Shine hero image. Enter a path to replace it with a photograph.</p></Field>
           <Field label="Primary button"><input className={INPUT} value={s.heroPrimaryCta} onChange={e => patch({ heroPrimaryCta: e.target.value })} /></Field>
           <Field label="Secondary button"><input className={INPUT} value={s.heroSecondaryCta} onChange={e => patch({ heroSecondaryCta: e.target.value })} /></Field>
-          <Field label="Intro image URL or uploaded path" className="lg:col-span-2"><input className={INPUT} value={s.introImage} onChange={e => patch({ introImage: e.target.value })} /><p className="mt-2 text-xs text-muted">Default: /shine/03_Website_Visuals/super-shine-warm-product-scene.png</p></Field>
+          <Field label="Intro image URL or uploaded path" className="lg:col-span-2"><input className={INPUT} value={s.introImage} onChange={e => patch({ introImage: e.target.value })} /><p className="mt-2 text-xs text-muted">Default: {INTRO_IMAGE}</p></Field>
           <Field label="Eyebrow">
             <input className={INPUT} value={s.heroEyebrow} onChange={(e) => patch({ heroEyebrow: e.target.value })} />
           </Field>

@@ -13,6 +13,7 @@ import {
   DEFAULT_SETTINGS,
   DEFAULT_STEPS,
   DEFAULT_SURFACES,
+  INTRO_IMAGE,
 } from "@/config/defaults";
 import type {
   Benefit,
@@ -200,7 +201,7 @@ function readSettings(data: Doc): SiteSettings {
       support: str(hero.support, d.hero.support),
     },
     intro: {
-      image: str(intro.image, "/shine/03_Website_Visuals/super-shine-warm-product-scene.png"),
+      image: str(intro.image, d.intro.image ?? INTRO_IMAGE),
       eyebrow: str(intro.eyebrow, d.intro.eyebrow),
       headline: str(intro.headline, d.intro.headline),
       body: str(intro.body, d.intro.body),
