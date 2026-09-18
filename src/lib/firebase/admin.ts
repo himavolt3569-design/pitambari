@@ -18,29 +18,39 @@ const ADMIN_APP = "tmg-admin";
 
 function readServiceAccount() {
   // Support pasting the entire JSON content into FIREBASE_SERVICE_ACCOUNT_KEY or GOOGLE_APPLICATION_CREDENTIALS
-  const rawJson =
+  const candidate =
     process.env.FIREBASE_SERVICE_ACCOUNT_KEY ||
     process.env.FIREBASE_ADMIN_KEY ||
-    (process.env.GOOGLE_APPLICATION_CREDENTIALS?.trim().startsWith("{")
-      ? process.env.GOOGLE_APPLICATION_CREDENTIALS
-      : undefined);
+    process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-  if (rawJson) {
-    try {
-      const parsed = JSON.parse(
-        rawJson.trim().startsWith("{")
-          ? rawJson
-          : Buffer.from(rawJson, "base64").toString("utf-8"),
-      );
-      if (parsed.project_id && parsed.client_email && parsed.private_key) {
-        return {
-          projectId: parsed.project_id,
-          clientEmail: parsed.client_email,
-          privateKey: parsed.private_key,
-        };
+  if (candidate) {
+    let text = candidate.trim();
+    // Strip surrounding quotes if the user wrapped the JSON in quotes
+    if (
+      (text.startsWith('"') && text.endsWith('"')) ||
+      (text.startsWith("'") && text.endsWith("'"))
+    ) {
+      text = text.slice(1, -1).trim();
+    }
+
+    if (text.startsWith("{") || (!text.includes(" ") && !text.includes("\\") && !text.includes("/") && text.length > 50)) {
+      try {
+        const jsonString = text.startsWith("{")
+          ? text
+          : Buffer.from(text, "base64").toString("utf-8");
+        const parsed = JSON.parse(jsonString);
+        if (parsed.project_id && parsed.client_email && parsed.private_key) {
+          return {
+            projectId: parsed.project_id,
+            clientEmail: parsed.client_email,
+            privateKey: parsed.private_key,
+          };
+        }
+      } catch (error) {
+        if (candidate !== process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+          console.error("[firebase-admin] Failed to parse service account JSON credential:", error);
+        }
       }
-    } catch (error) {
-      console.error("[firebase-admin] Failed to parse service account JSON credential:", error);
     }
   }
 
