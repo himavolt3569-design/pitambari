@@ -1,0 +1,154 @@
+rules_version = '2';
+
+// =============================================================================
+// Super Shine - Firestore security rules
+//
+// Posture: deny by default, and no client writes anywhere.
+//
+// Every write in this application goes through the Next.js server using the
+// Firebase Admin SDK, which bypasses these rules by design. That means these
+// rules exist to govern what an ordinary browser holding the public Firebase
+// config can do, and the answer is: read the storefront, nothing else.
+//
+// In particular a customer cannot edit a product, change a price, alter a
+// delivery fee, read another customer's order, or mark anything as paid,
+// because none of those documents are client writable and orders are not
+// client readable at all.
+//
+// That sentence used to be untrue. Writes were allowed to a signed-in super
+// admin, whose browser does hold a token carrying the claim, so anything able
+// to act in an admin tab could write straight to Firestore and skip price and
+// stock validation, the order transition rules, restocking and the audit
+// trail. The admin never needs that: every admin mutation is a server action
+// running on the Admin SDK. So writes are closed to clients outright, and a
+// super admin is now only ever a reader here.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- helpers ------------------------------------------------------------
+
+    function isSuperAdmin() {
+      return request.auth != null && request.auth.token.superAdmin == true;
+    }
+
+    function productIsActive(productId) {
+      return get(/databases/$(database)/documents/products/$(productId)).data.active == true;
+    }
+
+    // --- public storefront content -----------------------------------------
+    // Readable by anyone. Written only by the server.
+
+    match /products/{productId} {
+      allow read: if resource.data.active == true || isSuperAdmin();
+      allow write: if false;
+
+      match /variants/{variantId} {
+        // Rules do not cascade from the parent document. Without this check a
+        // withdrawn product's prices, SKUs and stock levels stayed readable to
+        // anyone who knew the product id, even though the product itself did
+        // not. isSuperAdmin() is tested first so staff never pay for the get().
+        allow read: if isSuperAdmin() || productIsActive(productId);
+        allow write: if false;
+      }
+    }
+
+    match /siteSettings/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+
+    match /faqs/{faqId} {
+      allow read: if resource.data.active == true || isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /benefits/{id}    { allow read: if true; allow write: if false; }
+    match /surfaces/{id}    { allow read: if true; allow write: if false; }
+    match /steps/{id}       { allow read: if true; allow write: if false; }
+    match /comparisons/{id} { allow read: if true; allow write: if false; }
+
+    // Commercial configuration. Readable so the storefront can render the
+    // options, never writable from a browser.
+    match /paymentMethods/{id} {
+      allow read: if resource.data.enabled == true || isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /deliveryMethods/{id} {
+      allow read: if resource.data.enabled == true || isSuperAdmin();
+      allow write: if false;
+    }
+
+    // --- orders and money ---------------------------------------------------
+    // Not readable or writable by any client, including a signed-in customer.
+    // Orders are created and read exclusively through the server, so an order
+    // id alone leaks nothing.
+
+    match /orders/{orderId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /orderEvents/{eventId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;            // audit trail: server only, append only
+    }
+
+    match /paymentTransactions/{id} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /customers/{customerId} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /discountCodes/{id} {
+      // Never readable: a client must not be able to enumerate codes.
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /inventoryLogs/{id} {
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    // --- server-only infrastructure ----------------------------------------
+    // Rate limit counters, idempotency keys and order number sequences must be
+    // completely invisible to clients or the protections they provide fail.
+
+    match /rateLimits/{id}       { allow read, write: if false; }
+    match /idempotencyKeys/{id}  { allow read, write: if false; }
+    match /counters/{id}         { allow read, write: if false; }
+    match /adminUsers/{id}       { allow read, write: if false; }
+
+    match /contactSubmissions/{id} {
+      allow read: if isSuperAdmin();
+      allow write: if false;            // submitted through the server
+    }
+
+    match /media/{id} {
+      // Images are served only through /api/media, which uses the Admin SDK
+      // and refuses a payment screenshot to anyone who is not staff. A browser
+      // reading this collection directly would walk straight past that check,
+      // and a screenshot small enough to skip chunking carries its base64 in
+      // this very document, so direct reads are closed. Uploads are written by
+      // the server, so no client needs to write here either. The catch-all
+      // below already denies the chunks subcollection.
+      allow read: if false;
+      allow write: if false;
+    }
+
+    // --- catch all ----------------------------------------------------------
+    // Anything not named above is denied outright, including future
+    // collections someone adds without updating these rules. partners and
+    // partnerEntries rely on this deliberately: they are server-only.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
