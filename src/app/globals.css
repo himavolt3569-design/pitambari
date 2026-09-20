@@ -320,3 +320,29 @@
 }
 @media (max-width: 374px) { .shine-wordmark svg { display: none; } .shine-hero-actions { gap: .85rem; } .shine-buy-total { display: none; } }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; scroll-behavior: auto !important; } .shine-stage-cue-ring { display: none; } }
+
+/* Product imagery as an entry into the purchase panel.
+   The button is laid over the image rather than wrapped around it, so each
+   image keeps its own layout and its GSAP timeline untouched. */
+.shine-image-cta { position: absolute; inset: 0; z-index: 3; padding: 0; background: none; border: 0; border-radius: inherit; cursor: pointer; }
+.shine-image-cta:focus-visible { outline: 2px solid var(--color-forest); outline-offset: -4px; }
+
+/* The hover affordance differs per image on purpose: GSAP writes inline
+   transforms on the bottle and the story photo, so a CSS transform there would
+   simply be overwritten. Filter is untouched by those timelines. */
+.shine-hero-bottle { transition: filter .45s ease; }
+.shine-hero-bottle:has(.shine-image-cta:hover) { filter: drop-shadow(20px 30px 20px #79552347); }
+.shine-story-photo img { transition: filter .45s ease; }
+.shine-story-photo:has(.shine-image-cta:hover) img { filter: brightness(1.05); }
+.shine-metal-image img { transition: transform .5s cubic-bezier(.22,.9,.3,1); }
+.shine-metal-image:has(.shine-image-cta:hover) img { transform: scale(1.06); }
+
+/* The panel acknowledges the arrival, so the eye lands on size and price
+   instead of wherever the scroll stopped. */
+.shine-purchase-panel { scroll-margin-top: 120px; }
+.shine-purchase-panel:focus { outline: none; }
+.shine-purchase-panel[data-cue="on"] { animation: shine-panel-arrive .9s cubic-bezier(.22,.9,.3,1); }
+@keyframes shine-panel-arrive {
+  0% { transform: translateY(7px); border-top-color: var(--color-forest); }
+  100% { transform: translateY(0); border-top-color: #dccfc3; }
+}

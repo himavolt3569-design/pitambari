@@ -1,7 +1,7 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useId, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 import { useCart } from "@/lib/store/cart";
 import { useUi } from "@/lib/store/ui";
 import { useLanguage } from "@/lib/store/language";
@@ -29,6 +29,24 @@ export function FeaturedProduct({ product, paymentMethods, deliveryMethods, surf
   const add = useCart(s => s.add);
   const openCart = useUi(s => s.openCart);
   const openCheckout = useUi(s => s.openCheckout);
+  const purchaseCue = useUi(s => s.purchaseCue);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [cueing, setCueing] = useState(false);
+
+  // Arrival from a product image elsewhere on the page. Move the reading
+  // position here and mark the panel briefly, so the eye lands on the size and
+  // the price rather than wherever the scroll happened to stop.
+  useEffect(() => {
+    if (!purchaseCue) return;
+    const panel = panelRef.current;
+    if (!panel) return;
+    // The scroll that image started is still running; focusing normally would
+    // snap the page past it.
+    panel.focus({ preventScroll: true });
+    setCueing(true);
+    const timer = window.setTimeout(() => setCueing(false), 900);
+    return () => window.clearTimeout(timer);
+  }, [purchaseCue]);
   const available = Boolean(variant && variant.stock > 0);
   const actualQuantity = variant ? Math.min(quantity, Math.max(1, variant.stock)) : 1;
   const name = lang === "ne" ? t.product.name : product.name;
@@ -69,7 +87,7 @@ export function FeaturedProduct({ product, paymentMethods, deliveryMethods, surf
       <span className="shine-stage-bottom">{lang === "ne" ? "तामा र पित्तलका लागि" : "Copper & brass. Beautiful again."}</span>
     </div>
     <div className="shine-product-copy"><h2 id="product-heading">{name}</h2><p className="shine-description">{lang === "ne" ? t.product.description : product.description}</p>
-      <div className="shine-purchase-panel">
+      <div className="shine-purchase-panel" ref={panelRef} tabIndex={-1} data-cue={cueing ? "on" : undefined}>
         {variant ? <>
           <ProductVariantSelector variants={active} selectedId={variant.id} onSelect={chooseVariant} />
           <div className="shine-price-row"><div><small>{t.product.totalPrice}</small><p className="shine-price">{formatNpr(variant.priceMinor)}</p></div><span className="shine-stock">{available ? t.product.inStock : t.product.outOfStock}</span></div>

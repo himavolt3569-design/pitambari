@@ -5,6 +5,7 @@ import { useLanguage } from "@/lib/store/language";
 import { useTranslations } from "@/components/layout/StoreCopyProvider";
 import { HERO_IMAGE, PRODUCT_IMAGE } from "@/config/defaults";
 import { BagIcon } from "@/components/commerce/FeaturedProduct";
+import { ProductImageCta } from "@/components/commerce/ProductImageCta";
 import { normalizeVideoSource } from "@/lib/content/video";
 import type { ComparisonEntry, SiteSettings } from "@/types";
 
@@ -22,7 +23,7 @@ export function HeroSection({ settings, productImage, productName, comparison }:
     </div>
     {!customImage && <div className="shine-hero-scene">
       <div className="shine-hero-disc" aria-hidden="true" />
-      <div className="shine-hero-bottle"><Image src={productImage || PRODUCT_IMAGE} alt={productName || "Super Shine Pitambari Liquid"} fill priority sizes="(max-width: 767px) 60vw, 28vw" quality={90} className="object-contain" /></div>
+      <div className="shine-hero-bottle"><Image src={productImage || PRODUCT_IMAGE} alt={productName || "Super Shine Pitambari Liquid"} fill priority sizes="(max-width: 767px) 60vw, 28vw" quality={90} className="object-contain" /><ProductImageCta /></div>
       {comparison && <div className="shine-hero-comparison">
         <div className="shine-hero-comparison-image"><Image key={after ? "after" : "before"} src={after ? comparison.afterImage : comparison.beforeImage} alt={`${comparison.label}: ${after ? "after" : "before"}`} fill sizes="(max-width: 767px) 37vw, 19vw" quality={90} className="object-cover" /></div>
         <div className="shine-hero-toggle" role="group" aria-label={lang === "ne" ? "पहिले र पछि हेर्नुहोस्" : "Preview before and after"}><button type="button" aria-pressed={!after} onClick={() => setAfter(false)}>{t.results.before}</button><button type="button" aria-pressed={after} onClick={() => setAfter(true)}>{t.results.after}</button></div>
